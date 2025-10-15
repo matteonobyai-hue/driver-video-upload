@@ -4,15 +4,9 @@ export async function onRequestPost({ request, env }) {
 
     const objectUrl = `https://${env.MY_R2_BUCKET}.r2.dev/${fileName}`;
 
-    const headers = {
-      'Access-Control-Allow-Origin': '*',
-      'Content-Type': fileType,
-    };
-
-    await env.MY_R2_BUCKET.put(fileName, await request.arrayBuffer(), {
-      httpMetadata: {
-        contentType: fileType,
-      },
+    // Prepariamo un oggetto vuoto nel bucket, Cloudflare R2 usa .put()
+    await env.MY_R2_BUCKET.put(fileName, new Uint8Array(), {
+      httpMetadata: { contentType: fileType },
     });
 
     return new Response(
