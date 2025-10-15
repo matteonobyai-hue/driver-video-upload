@@ -1,29 +1,20 @@
-export async function onRequestPost({ request, env }) {
-  try {
-    const { fileName, fileType } = await request.json();
+export async function onRequestPost(context) {
+  const { request, env } = context;
 
-    // Salva l'oggetto nel bucket (vuoto o con placeholder)
-    await env.MY_R2_BUCKET.put(fileName, new Uint8Array(), {
-      httpMetadata: { contentType: fileType },
-    });
+  const { fileName, fileType } = await request.json();
 
-    // Costruisci l'URL pubblico (statico, bucket configurato come pubblico)
-    const uploadUrl = `https://videos-driver.r2.dev/${fileName}`;
+  const objectKey = fileName;
 
-    return new Response(
-      JSON.stringify({ uploadUrl }),
-      {
-        headers: { 'Content-Type': 'application/json' },
-        status: 200,
-      }
-    );
-  } catch (err) {
-    return new Response(
-      JSON.stringify({ error: 'Errore interno', details: err.message }),
-      {
-        headers: { 'Content-Type': 'application/json' },
-        status: 500,
-      }
-    );
-  }
+  const uploadUrl = `https://${context.env.MY_R2_BUCKET}.r2.dev/${objectKey}`;
+
+  // Scrivi l'oggetto nel bucket con fetch() su R2 usando il binding
+  const r2Object = await env.MY_R2_BUCKET.put(objectKey, null, {
+    httpMetadata: {
+      contentType: fileType
+    }
+  });
+
+  return new Response(JSON.stringify({ uploadUrl }), {
+    headers: { 'Content-Type': 'application/json' }
+  });
 }
