@@ -53,8 +53,8 @@
   </div>
 
   <script>
-    // ✅ URL del tuo script Google Apps Script
-    const driveUploadUrl = "https://script.google.com/macros/s/AKfycbxJBos9ADm9kpLxmnAoWIQ3QLNkURu51DM3PjjCF54UVlIeOhZQyHRCU8tf3QviVuKqC/exec";
+    // ✅ URL del tuo webhook n8n (proxy che risolve i CORS)
+    const driveUploadUrl = "https://n8n.srv990342.hstgr.cloud/webhook/upload-drive";
 
     let selectedPhase = null;
     let selectedService = null;
@@ -85,7 +85,7 @@
       });
     });
 
-    // UPLOAD logic — MODIFICATO per usare Google Drive
+    // UPLOAD logic — via n8n proxy to Google Drive
     document.getElementById("uploadBtn").addEventListener("click", async () => {
       const file = document.getElementById("fileInput").files[0];
       const name = document.getElementById("driverName").value.trim();
