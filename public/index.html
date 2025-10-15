@@ -47,13 +47,14 @@
       <input id="fileInput" type="file" accept="video/*" class="w-full text-gray-600" />
     </div>
 
-    <button id="uploadBtn" class="w-full bg-blue-600 text-white py-2 rounded-full hover:bg-blue-700">Upload to S3</button>
+    <button id="uploadBtn" class="w-full bg-blue-600 text-white py-2 rounded-full hover:bg-blue-700">Upload to Drive</button>
 
     <p id="status" class="text-center text-sm text-gray-600 mt-4"></p>
   </div>
 
   <script>
-    const apiUrl = "https://ditf5qwfn4.execute-api.eu-north-1.amazonaws.com/prod/upload";
+    // ✅ URL del tuo script Google Apps Script
+    const driveUploadUrl = "https://script.google.com/macros/s/AKfycbxJBos9ADm9kpLxmnAoWIQ3QLNkURu51DM3PjjCF54UVlIeOhZQyHRCU8tf3QviVuKqC/exec";
 
     let selectedPhase = null;
     let selectedService = null;
@@ -84,7 +85,7 @@
       });
     });
 
-    // UPLOAD logic
+    // UPLOAD logic — MODIFICATO per usare Google Drive
     document.getElementById("uploadBtn").addEventListener("click", async () => {
       const file = document.getElementById("fileInput").files[0];
       const name = document.getElementById("driverName").value.trim();
@@ -99,60 +100,35 @@
         return;
       }
 
-      status.textContent = "Generating upload URL...";
+      status.textContent = "⏳ Upload in corso...";
 
       try {
-        const response = await fetch(apiUrl, {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("phase", selectedPhase);
+        formData.append("service", selectedService);
+        formData.append("serviceNumber", serviceNumber);
+        formData.append("driverName", name);
+        formData.append("driverEmail", email);
+
+        const res = await fetch(driveUploadUrl, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            fileName: `${Date.now()}_${file.name}`,
-            fileType: file.type
-          })
+          body: formData
         });
 
-        const data = await response.json();
+        const data = await res.json();
 
-// Gestione flessibile del body, qualunque sia il formato
-let uploadUrl;
-
-if (data.uploadUrl) {
-  // Caso 1: la lambda restituisce direttamente l’URL
-  uploadUrl = data.uploadUrl;
-} else if (data.body) {
-  // Caso 2: la lambda restituisce un JSON dentro "body"
-  try {
-    const parsedBody = JSON.parse(data.body);
-    uploadUrl = parsedBody.uploadUrl;
-  } catch (err) {
-    console.error("Error parsing body:", data.body);
-  }
-} else {
-  console.error("Unexpected API response:", data);
-}
-
-if (!uploadUrl) {
-  document.getElementById("status").textContent =
-    "❌ Error: invalid response from server.";
-  return;
-}
-
-        status.textContent = "Uploading video...";
-
-        const upload = await fetch(uploadUrl, {
-          method: "PUT",
-          headers: { "Content-Type": file.type },
-          body: file
-        });
-
-        if (upload.ok) {
-          status.textContent = "✅ Upload complete. Confirmation will be sent via email.";
+        if (data.success) {
+          status.innerHTML = `✅ Upload completato!<br>
+            File salvato su Drive:<br>
+            <a href="${data.fileUrl}" target="_blank" class="text-blue-600 underline">${data.fileName}</a>`;
         } else {
-          status.textContent = "❌ Upload failed. Please try again.";
+          status.textContent = "❌ Errore durante l'upload: " + data.error;
         }
-      } catch (error) {
-        console.error(error);
-        status.textContent = "❌ Error during upload.";
+
+      } catch (err) {
+        console.error(err);
+        status.textContent = "❌ Errore di connessione o upload fallito.";
       }
     });
   </script>
