@@ -1,25 +1,34 @@
-export async function onRequestPost(context) {
-  const { fileName, fileType } = await context.request.json();
+export async function onRequestGet() {
+  const { AwsClient } = await import('aws4fetch');
 
-  const accountId = 'a20f4c50d50b88091cc283a249544f43';
-  const bucket = 'videos-driver';
-  const endpoint = `https://${accountId}.r2.cloudflarestorage.com`;
+  const accessKeyId = process.env.S3_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY;
+  const bucket = process.env.S3_BUCKET_NAME;
+  const endpoint = process.env.S3_ENDPOINT;
 
-  const accessKeyId = '3c246b59f0f8bd24fc62e14addf0dba1';
-  const secretAccessKey = '5e6504bca6543a01e00184cac86c746f73b1afac8ecfbfcbdba238575b6d21f73';
+  const client = new AwsClient({
+    accessKeyId,
+    secretAccessKey,
+    service: "s3",
+    region: "auto",
+  });
 
-  const expiresInSeconds = 3600; // 1 ora
+  const key = `uploads/${Date.now()}.mp4`;
 
-  const url = new URL(`${endpoint}/${bucket}/${fileName}`);
-  const expires = Math.floor(Date.now() / 1000) + expiresInSeconds;
+  const signed = await client.sign(
+    `${endpoint}/${bucket}/${key}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "video/mp4"
+      },
+    }
+  );
 
-  const signature = btoa(`${accessKeyId}:${secretAccessKey}`);
-
-  const signedUrl = `${url}?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=${encodeURIComponent(
-    accessKeyId
-  )}&X-Amz-Date=${new Date().toISOString().replace(/[:-]|\.\d{3}/g, '')}&X-Amz-Expires=${expiresInSeconds}&X-Amz-SignedHeaders=host`;
-
-  return new Response(JSON.stringify({ uploadUrl: signedUrl }), {
-    headers: { 'Content-Type': 'application/json' },
+  return new Response(JSON.stringify({
+    uploadURL: signed.url,
+    key,
+  }), {
+    headers: { "Content-Type": "application/json" },
   });
 }
