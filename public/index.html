@@ -112,7 +112,30 @@
         });
 
         const data = await response.json();
-        const uploadUrl = JSON.parse(data.body).uploadUrl;
+
+// Gestione flessibile del body, qualunque sia il formato
+let uploadUrl;
+
+if (data.uploadUrl) {
+  // Caso 1: la lambda restituisce direttamente l’URL
+  uploadUrl = data.uploadUrl;
+} else if (data.body) {
+  // Caso 2: la lambda restituisce un JSON dentro "body"
+  try {
+    const parsedBody = JSON.parse(data.body);
+    uploadUrl = parsedBody.uploadUrl;
+  } catch (err) {
+    console.error("Error parsing body:", data.body);
+  }
+} else {
+  console.error("Unexpected API response:", data);
+}
+
+if (!uploadUrl) {
+  document.getElementById("status").textContent =
+    "❌ Error: invalid response from server.";
+  return;
+}
 
         status.textContent = "Uploading video...";
 
