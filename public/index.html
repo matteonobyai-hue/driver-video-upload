@@ -1,103 +1,30 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Driver Video Upload</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      max-width: 600px;
-      margin: auto;
-    }
-    label {
-      display: block;
-      margin-top: 15px;
-      font-weight: bold;
-    }
-    input[type="text"],
-    input[type="email"],
-    input[type="file"],
-    button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-    }
-    .radio-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 5px;
-    }
-    .radio-option {
-      display: flex;
-      align-items: center;
-    }
-    .radio-option input {
-      margin-right: 5px;
-    }
-    .hidden {
-      display: none;
-    }
-  </style>
-</head>
-<body>
-  <h2>Driver Video Upload</h2>
+<script>
+  function toggleServiceNumberInput() {
+    const selected = document.querySelector('input[name="service"]:checked').value;
+    const div = document.getElementById('serviceNumberDiv');
+    div.classList.toggle('hidden', selected !== 'NUMBER');
+  }
 
-  <label>Select Phase</label>
-  <div class="radio-group" id="phase">
-    <div class="radio-option"><input type="radio" name="phase" value="PRE" checked /> PRE</div>
-    <div class="radio-option"><input type="radio" name="phase" value="POST" /> POST</div>
-  </div>
+  async function upload() {
+    const file = document.getElementById('fileInput').files[0];
+    if (!file) return alert('Please select a video file.');
 
-  <label>Service</label>
-  <div class="radio-group" id="service">
-    <div class="radio-option"><input type="radio" name="service" value="GARAGE" checked onclick="toggleServiceNumberInput()" /> Garage</div>
-    <div class="radio-option"><input type="radio" name="service" value="PARTNER" onclick="toggleServiceNumberInput()" /> Partner</div>
-    <div class="radio-option"><input type="radio" name="service" value="NUMBER" onclick="toggleServiceNumberInput()" /> Service Number</div>
-  </div>
+    const driverName = document.getElementById('driverName').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const phase = document.querySelector('input[name="phase"]:checked').value;
+    const service = document.querySelector('input[name="service"]:checked').value;
+    const serviceNumber = document.getElementById('serviceNumber').value.trim();
 
-  <div id="serviceNumberDiv" class="hidden">
-    <label for="serviceNumber">Enter Service Number</label>
-    <input type="text" id="serviceNumber" />
-  </div>
-
-  <label for="driverName">Driver Name</label>
-  <input type="text" id="driverName" placeholder="Enter your name" />
-
-  <label for="email">Email</label>
-  <input type="email" id="email" placeholder="Enter your email" />
-
-  <label for="fileInput">Select Video File</label>
-  <input type="file" id="fileInput" accept="video/*" />
-
-  <button onclick="upload()">Upload Video</button>
-
-  <script>
-    function toggleServiceNumberInput() {
-      const selected = document.querySelector('input[name="service"]:checked').value;
-      const div = document.getElementById('serviceNumberDiv');
-      div.classList.toggle('hidden', selected !== 'NUMBER');
+    if (!driverName || !email) {
+      alert('Please fill in all required fields.');
+      return;
     }
 
-    async function upload() {
-      const file = document.getElementById('fileInput').files[0];
-      if (!file) return alert('Please select a video file.');
+    const fileName = `${Date.now()}_${driverName.replace(/\s/g, "_")}_${file.name}`;
 
-      const driverName = document.getElementById('driverName').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const phase = document.querySelector('input[name="phase"]:checked').value;
-      const service = document.querySelector('input[name="service"]:checked').value;
-      const serviceNumber = document.getElementById('serviceNumber').value.trim();
+    let uploadUrl;
 
-      if (!driverName || !email) {
-        alert('Please fill in all required fields.');
-        return;
-      }
-
-      const fileName = `${Date.now()}_${driverName.replace(/\s/g, "_")}_${file.name}`;
-
+    try {
       const res = await fetch('/api/get-upload-url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -107,8 +34,21 @@
         })
       });
 
-      const { uploadUrl } = await res.json();
+      if (!res.ok) {
+        const text = await res.text(); // debug info
+        console.error("Server error response:", text);
+        throw new Error('Server error while generating upload URL');
+      }
 
+      const json = await res.json();
+      uploadUrl = json.uploadUrl;
+    } catch (err) {
+      console.error("Failed to get upload URL:", err);
+      alert("❌ Failed to get upload URL.");
+      return;
+    }
+
+    try {
       const uploadRes = await fetch(uploadUrl, {
         method: 'PUT',
         headers: { 'Content-Type': file.type },
@@ -120,7 +60,9 @@
       } else {
         alert('❌ Upload failed!');
       }
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert("❌ Upload failed due to network error.");
     }
-  </script>
-</body>
-</html>
+  }
+</script>
