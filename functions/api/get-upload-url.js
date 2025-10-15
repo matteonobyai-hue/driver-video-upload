@@ -2,15 +2,16 @@ export async function onRequestPost({ request, env }) {
   try {
     const { fileName, fileType } = await request.json();
 
-    const objectUrl = `https://${env.MY_R2_BUCKET}.r2.dev/${fileName}`;
-
-    // Prepariamo un oggetto vuoto nel bucket, Cloudflare R2 usa .put()
+    // Salva l'oggetto nel bucket (vuoto o con placeholder)
     await env.MY_R2_BUCKET.put(fileName, new Uint8Array(), {
       httpMetadata: { contentType: fileType },
     });
 
+    // Costruisci l'URL pubblico (statico, bucket configurato come pubblico)
+    const uploadUrl = `https://videos-driver.r2.dev/${fileName}`;
+
     return new Response(
-      JSON.stringify({ uploadUrl: objectUrl }),
+      JSON.stringify({ uploadUrl }),
       {
         headers: { 'Content-Type': 'application/json' },
         status: 200,
@@ -18,7 +19,7 @@ export async function onRequestPost({ request, env }) {
     );
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: 'Errore nel caricamento', details: err.message }),
+      JSON.stringify({ error: 'Errore interno', details: err.message }),
       {
         headers: { 'Content-Type': 'application/json' },
         status: 500,
