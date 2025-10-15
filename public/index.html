@@ -1,68 +1,137 @@
-<script>
-  function toggleServiceNumberInput() {
-    const selected = document.querySelector('input[name="service"]:checked').value;
-    const div = document.getElementById('serviceNumberDiv');
-    div.classList.toggle('hidden', selected !== 'NUMBER');
-  }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Video Upload</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+  <div class="bg-white shadow-xl rounded-2xl p-6 w-full max-w-md">
+    <h2 class="text-2xl font-semibold text-center mb-6">Upload Video</h2>
 
-  async function upload() {
-    const file = document.getElementById('fileInput').files[0];
-    if (!file) return alert('Please select a video file.');
+    <!-- PHASE -->
+    <div class="mb-4">
+      <label class="block text-gray-700 mb-2 text-sm font-medium">Phase</label>
+      <div class="flex justify-between">
+        <button id="btnPre" class="phase-btn w-1/2 mx-1 py-2 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-200">Pre</button>
+        <button id="btnPost" class="phase-btn w-1/2 mx-1 py-2 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-200">Post</button>
+      </div>
+    </div>
 
-    const driverName = document.getElementById('driverName').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const phase = document.querySelector('input[name="phase"]:checked').value;
-    const service = document.querySelector('input[name="service"]:checked').value;
-    const serviceNumber = document.getElementById('serviceNumber').value.trim();
+    <!-- SERVICE -->
+    <div class="mb-4">
+      <label class="block text-gray-700 mb-2 text-sm font-medium">Service</label>
+      <div class="flex flex-wrap gap-2">
+        <button class="service-btn flex-1 py-2 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-200" data-service="Garage">Garage</button>
+        <button class="service-btn flex-1 py-2 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-200" data-service="Partner">Partner</button>
+        <button class="service-btn flex-1 py-2 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-200" data-service="Number">Service number</button>
+      </div>
+      <input type="text" id="serviceNumber" placeholder="Enter service number" class="hidden mt-3 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+    </div>
 
-    if (!driverName || !email) {
-      alert('Please fill in all required fields.');
-      return;
-    }
+    <!-- DRIVER INFO -->
+    <div class="mb-4">
+      <label class="block text-gray-700 text-sm font-medium mb-2">Driver Name</label>
+      <input id="driverName" type="text" placeholder="Enter your name" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+    </div>
 
-    const fileName = `${Date.now()}_${driverName.replace(/\s/g, "_")}_${file.name}`;
+    <div class="mb-4">
+      <label class="block text-gray-700 text-sm font-medium mb-2">Email</label>
+      <input id="driverEmail" type="email" placeholder="Enter your email" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+    </div>
 
-    let uploadUrl;
+    <!-- VIDEO UPLOAD -->
+    <div class="mb-4">
+      <label class="block text-gray-700 text-sm font-medium mb-2">Upload Video</label>
+      <input id="fileInput" type="file" accept="video/*" class="w-full text-gray-600" />
+    </div>
 
-    try {
-      const res = await fetch('/api/get-upload-url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fileName,
-          fileType: file.type
-        })
+    <button id="uploadBtn" class="w-full bg-blue-600 text-white py-2 rounded-full hover:bg-blue-700">Upload to S3</button>
+
+    <p id="status" class="text-center text-sm text-gray-600 mt-4"></p>
+  </div>
+
+  <script>
+    const apiUrl = "https://ditf5qwfn4.execute-api.eu-north-1.amazonaws.com/prod/upload";
+
+    let selectedPhase = null;
+    let selectedService = null;
+
+    // PHASE selection
+    document.querySelectorAll(".phase-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".phase-btn").forEach(b => b.classList.remove("bg-blue-600", "text-white"));
+        btn.classList.add("bg-blue-600", "text-white");
+        selectedPhase = btn.innerText;
       });
+    });
 
-      if (!res.ok) {
-        const text = await res.text(); // debug info
-        console.error("Server error response:", text);
-        throw new Error('Server error while generating upload URL');
+    // SERVICE selection
+    document.querySelectorAll(".service-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".service-btn").forEach(b => b.classList.remove("bg-blue-600", "text-white"));
+        btn.classList.add("bg-blue-600", "text-white");
+        selectedService = btn.getAttribute("data-service");
+
+        const serviceNumberInput = document.getElementById("serviceNumber");
+        if (selectedService === "Number") {
+          serviceNumberInput.classList.remove("hidden");
+        } else {
+          serviceNumberInput.classList.add("hidden");
+          serviceNumberInput.value = "";
+        }
+      });
+    });
+
+    // UPLOAD logic
+    document.getElementById("uploadBtn").addEventListener("click", async () => {
+      const file = document.getElementById("fileInput").files[0];
+      const name = document.getElementById("driverName").value.trim();
+      const email = document.getElementById("driverEmail").value.trim();
+      const serviceNumber = document.getElementById("serviceNumber").value.trim();
+
+      const status = document.getElementById("status");
+      status.textContent = "";
+
+      if (!selectedPhase || !selectedService || !file || !name || !email) {
+        status.textContent = "⚠️ Please complete all fields before uploading.";
+        return;
       }
 
-      const json = await res.json();
-      uploadUrl = json.uploadUrl;
-    } catch (err) {
-      console.error("Failed to get upload URL:", err);
-      alert("❌ Failed to get upload URL.");
-      return;
-    }
+      status.textContent = "Generating upload URL...";
 
-    try {
-      const uploadRes = await fetch(uploadUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': file.type },
-        body: file
-      });
+      try {
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fileName: `${Date.now()}_${file.name}`,
+            fileType: file.type
+          })
+        });
 
-      if (uploadRes.ok) {
-        alert('✅ Upload completed successfully!');
-      } else {
-        alert('❌ Upload failed!');
+        const data = await response.json();
+        const uploadUrl = JSON.parse(data.body).uploadUrl;
+
+        status.textContent = "Uploading video...";
+
+        const upload = await fetch(uploadUrl, {
+          method: "PUT",
+          headers: { "Content-Type": file.type },
+          body: file
+        });
+
+        if (upload.ok) {
+          status.textContent = "✅ Upload complete. Confirmation will be sent via email.";
+        } else {
+          status.textContent = "❌ Upload failed. Please try again.";
+        }
+      } catch (error) {
+        console.error(error);
+        status.textContent = "❌ Error during upload.";
       }
-    } catch (err) {
-      console.error("Upload error:", err);
-      alert("❌ Upload failed due to network error.");
-    }
-  }
-</script>
+    });
+  </script>
+</body>
+</html>
