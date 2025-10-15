@@ -1,28 +1,34 @@
-export async function onRequestPost(context) {
-  const { request, env } = context;
-  const { fileName, fileType } = await request.json();
+export async function onRequestPost({ request, env }) {
+  try {
+    const { fileName, fileType } = await request.json();
 
-  if (!fileName || !fileType) {
-    return new Response(JSON.stringify({ error: 'Missing fileName or fileType' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+    const objectUrl = `https://${env.MY_R2_BUCKET}.r2.dev/${fileName}`;
 
-  const objectKey = `${Date.now()}_${fileName}`;
+    const headers = {
+      'Access-Control-Allow-Origin': '*',
+      'Content-Type': fileType,
+    };
 
-  const signedUrl = await env.MY_R2_BUCKET.createPresignedUrl(
-    objectKey,
-    {
-      method: 'PUT',
-      expiry: 60 * 5, // 5 minuti
-      headers: {
-        'Content-Type': fileType,
+    await env.MY_R2_BUCKET.put(fileName, await request.arrayBuffer(), {
+      httpMetadata: {
+        contentType: fileType,
       },
-    }
-  );
+    });
 
-  return new Response(JSON.stringify({ uploadUrl: signedUrl }), {
-    headers: { 'Content-Type': 'application/json' },
-  });
+    return new Response(
+      JSON.stringify({ uploadUrl: objectUrl }),
+      {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+      }
+    );
+  } catch (err) {
+    return new Response(
+      JSON.stringify({ error: 'Errore nel caricamento', details: err.message }),
+      {
+        headers: { 'Content-Type': 'application/json' },
+        status: 500,
+      }
+    );
+  }
 }
