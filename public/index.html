@@ -1,31 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Driver Video Upload</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
-    label { display: block; margin-top: 15px; font-weight: bold; }
-    input, select, button { width: 100%; padding: 10px; margin-top: 5px; }
-    .hidden { display: none; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    input[type="text"],
+    input[type="email"],
+    input[type="file"],
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+    }
+    .radio-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 5px;
+    }
+    .radio-option {
+      display: flex;
+      align-items: center;
+    }
+    .radio-option input {
+      margin-right: 5px;
+    }
+    .hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
   <h2>Driver Video Upload</h2>
 
-  <label for="phase">Select Phase</label>
-  <select id="phase">
-    <option value="PRE">PRE</option>
-    <option value="POST">POST</option>
-  </select>
+  <label>Select Phase</label>
+  <div class="radio-group" id="phase">
+    <div class="radio-option"><input type="radio" name="phase" value="PRE" checked /> PRE</div>
+    <div class="radio-option"><input type="radio" name="phase" value="POST" /> POST</div>
+  </div>
 
-  <label for="service">Service</label>
-  <select id="service" onchange="toggleServiceNumberInput()">
-    <option value="GARAGE">Garage</option>
-    <option value="PARTNER">Partner</option>
-    <option value="NUMBER">Service Number</option>
-  </select>
+  <label>Service</label>
+  <div class="radio-group" id="service">
+    <div class="radio-option"><input type="radio" name="service" value="GARAGE" checked onclick="toggleServiceNumberInput()" /> Garage</div>
+    <div class="radio-option"><input type="radio" name="service" value="PARTNER" onclick="toggleServiceNumberInput()" /> Partner</div>
+    <div class="radio-option"><input type="radio" name="service" value="NUMBER" onclick="toggleServiceNumberInput()" /> Service Number</div>
+  </div>
 
   <div id="serviceNumberDiv" class="hidden">
     <label for="serviceNumber">Enter Service Number</label>
@@ -45,7 +76,7 @@
 
   <script>
     function toggleServiceNumberInput() {
-      const selected = document.getElementById('service').value;
+      const selected = document.querySelector('input[name="service"]:checked').value;
       const div = document.getElementById('serviceNumberDiv');
       div.classList.toggle('hidden', selected !== 'NUMBER');
     }
@@ -56,8 +87,8 @@
 
       const driverName = document.getElementById('driverName').value.trim();
       const email = document.getElementById('email').value.trim();
-      const phase = document.getElementById('phase').value;
-      const service = document.getElementById('service').value;
+      const phase = document.querySelector('input[name="phase"]:checked').value;
+      const service = document.querySelector('input[name="service"]:checked').value;
       const serviceNumber = document.getElementById('serviceNumber').value.trim();
 
       if (!driverName || !email) {
@@ -85,9 +116,9 @@
       });
 
       if (uploadRes.ok) {
-        alert('Upload completed successfully!');
+        alert('✅ Upload completed successfully!');
       } else {
-        alert('Upload failed!');
+        alert('❌ Upload failed!');
       }
     }
   </script>
