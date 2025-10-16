@@ -50,6 +50,7 @@
       <input id="fileInput" type="file" accept="video/*" class="w-full text-gray-600" />
     </div>
 
+    <!-- Progress bar -->
     <div class="w-full bg-gray-200 h-3 rounded-full mb-4">
       <div id="progressBar" class="h-3 bg-blue-600 rounded-full" style="width: 0%"></div>
     </div>
@@ -62,8 +63,8 @@
   </div>
 
   <script>
-    // 👉 Inserisci qui il tuo webhook n8n Cloud
-    const webhookUrl = "https://n8n.srv990342.hstgr.cloud/webhook/upload-drive";
+    // ✅ Il tuo vero webhook n8n Cloud
+    const webhookUrl = "https://matteososa.app.n8n.cloud/webhook-test/upload-drive";
 
     let selectedPhase = null;
     let selectedService = null;
