@@ -63,8 +63,8 @@
   </div>
 
   <script>
-    // ✅ Il tuo vero webhook n8n Cloud
-    const webhookUrl = "https://matteososa.app.n8n.cloud/webhook-test/upload-drive";
+    // ✅ Usa il tuo webhook n8n self-hosted o cloud
+    const webhookUrl = "https://n8n.srv990342.hstgr.cloud/webhook-test/upload-chunk";
 
     let selectedPhase = null;
     let selectedService = null;
@@ -101,6 +101,7 @@
         return;
       }
 
+      const sessionId = Date.now() + "-" + Math.random().toString(36).substr(2, 8);
       const chunkSize = 10 * 1024 * 1024; // 10 MB
       let offset = 0;
       let chunkIndex = 0;
@@ -113,8 +114,10 @@
         const formData = new FormData();
         formData.append("chunk", chunk);
         formData.append("fileName", file.name);
+        formData.append("fileSize", file.size);
         formData.append("chunkIndex", chunkIndex);
         formData.append("totalChunks", totalChunks);
+        formData.append("sessionId", sessionId);
         formData.append("phase", selectedPhase);
         formData.append("service", selectedService);
         formData.append("serviceNumber", serviceNumber);
@@ -135,7 +138,7 @@
         progressBar.style.width = percent + "%";
       }
 
-      status.textContent = "✅ Upload completato! I dati sono stati inviati al server.";
+      status.textContent = "✅ Upload completato! Tutti i chunk inviati.";
     });
   </script>
 </body>
