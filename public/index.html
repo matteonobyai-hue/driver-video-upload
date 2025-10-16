@@ -1,65 +1,73 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Video Upload</title>
+  <title>Carica video</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="min-h-screen bg-gray-100 flex items-center justify-center p-4">
   <div class="bg-white shadow-xl rounded-2xl p-6 w-full max-w-md">
-    <h2 class="text-2xl font-semibold text-center mb-6">Upload Video</h2>
+    <h2 class="text-2xl font-semibold text-center mb-6">Carica Video</h2>
 
-    <!-- PHASE -->
+    <!-- Phase -->
     <div class="mb-4">
       <label class="block text-gray-700 mb-2 text-sm font-medium">Phase</label>
       <div class="flex justify-between">
-        <button id="btnPre" class="phase-btn w-1/2 mx-1 py-2 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-200">Pre</button>
-        <button id="btnPost" class="phase-btn w-1/2 mx-1 py-2 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-200">Post</button>
+        <button type="button" class="phase-btn w-1/2 mx-1 py-2 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-200">Pre</button>
+        <button type="button" class="phase-btn w-1/2 mx-1 py-2 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-200">Post</button>
       </div>
     </div>
 
-    <!-- SERVICE -->
+    <!-- Service -->
     <div class="mb-4">
       <label class="block text-gray-700 mb-2 text-sm font-medium">Service</label>
       <div class="flex flex-wrap gap-2">
-        <button class="service-btn flex-1 py-2 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-200" data-service="Garage">Garage</button>
-        <button class="service-btn flex-1 py-2 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-200" data-service="Partner">Partner</button>
-        <button class="service-btn flex-1 py-2 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-200" data-service="Number">Service number</button>
+        <button type="button" class="service-btn flex-1 py-2 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-200" data-service="Garage">Garage</button>
+        <button type="button" class="service-btn flex-1 py-2 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-200" data-service="Partner">Partner</button>
+        <button type="button" class="service-btn flex-1 py-2 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-200" data-service="Number">Service number</button>
       </div>
-      <input type="text" id="serviceNumber" placeholder="Enter service number" class="hidden mt-3 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+      <input type="text" id="serviceNumber" placeholder="Enter service number"
+        class="hidden mt-3 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
     </div>
 
-    <!-- DRIVER INFO -->
+    <!-- Driver info -->
     <div class="mb-4">
       <label class="block text-gray-700 text-sm font-medium mb-2">Driver Name</label>
-      <input id="driverName" type="text" placeholder="Enter your name" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+      <input id="driverName" type="text" placeholder="Enter your name"
+        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
     </div>
 
     <div class="mb-4">
       <label class="block text-gray-700 text-sm font-medium mb-2">Email</label>
-      <input id="driverEmail" type="email" placeholder="Enter your email" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+      <input id="driverEmail" type="email" placeholder="Enter your email"
+        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
     </div>
 
-    <!-- VIDEO UPLOAD -->
+    <!-- Video upload -->
     <div class="mb-4">
-      <label class="block text-gray-700 text-sm font-medium mb-2">Upload Video</label>
+      <label class="block text-gray-700 text-sm font-medium mb-2">Video</label>
       <input id="fileInput" type="file" accept="video/*" class="w-full text-gray-600" />
     </div>
 
-    <button id="uploadBtn" class="w-full bg-blue-600 text-white py-2 rounded-full hover:bg-blue-700">Upload to Drive</button>
+    <div class="w-full bg-gray-200 h-3 rounded-full mb-4">
+      <div id="progressBar" class="h-3 bg-blue-600 rounded-full" style="width: 0%"></div>
+    </div>
+
+    <button id="uploadBtn" class="w-full bg-blue-600 text-white py-2 rounded-full hover:bg-blue-700 transition-colors">
+      Carica su server
+    </button>
 
     <p id="status" class="text-center text-sm text-gray-600 mt-4"></p>
   </div>
 
   <script>
-    // ✅ URL del tuo webhook n8n (proxy che risolve i CORS)
-    const driveUploadUrl = "https://n8n.srv990342.hstgr.cloud/webhook/upload-drive";
+    // 👉 Inserisci qui il tuo webhook n8n Cloud
+    const webhookUrl = "https://n8n.srv990342.hstgr.cloud/webhook/upload-drive";
 
     let selectedPhase = null;
     let selectedService = null;
 
-    // PHASE selection
     document.querySelectorAll(".phase-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".phase-btn").forEach(b => b.classList.remove("bg-blue-600", "text-white"));
@@ -68,68 +76,65 @@
       });
     });
 
-    // SERVICE selection
     document.querySelectorAll(".service-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".service-btn").forEach(b => b.classList.remove("bg-blue-600", "text-white"));
         btn.classList.add("bg-blue-600", "text-white");
         selectedService = btn.getAttribute("data-service");
-
-        const serviceNumberInput = document.getElementById("serviceNumber");
-        if (selectedService === "Number") {
-          serviceNumberInput.classList.remove("hidden");
-        } else {
-          serviceNumberInput.classList.add("hidden");
-          serviceNumberInput.value = "";
-        }
+        const input = document.getElementById("serviceNumber");
+        input.classList.toggle("hidden", selectedService !== "Number");
       });
     });
 
-    // UPLOAD logic — via n8n proxy to Google Drive
+    // Upload a blocchi (chunked)
     document.getElementById("uploadBtn").addEventListener("click", async () => {
       const file = document.getElementById("fileInput").files[0];
       const name = document.getElementById("driverName").value.trim();
       const email = document.getElementById("driverEmail").value.trim();
       const serviceNumber = document.getElementById("serviceNumber").value.trim();
-
       const status = document.getElementById("status");
-      status.textContent = "";
+      const progressBar = document.getElementById("progressBar");
 
       if (!selectedPhase || !selectedService || !file || !name || !email) {
-        status.textContent = "⚠️ Please complete all fields before uploading.";
+        status.textContent = "⚠️ Compila tutti i campi prima di caricare.";
         return;
       }
 
+      const chunkSize = 10 * 1024 * 1024; // 10 MB
+      let offset = 0;
+      let chunkIndex = 0;
+      const totalChunks = Math.ceil(file.size / chunkSize);
+      progressBar.style.width = "0%";
       status.textContent = "⏳ Upload in corso...";
 
-      try {
+      while (offset < file.size) {
+        const chunk = file.slice(offset, offset + chunkSize);
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("chunk", chunk);
+        formData.append("fileName", file.name);
+        formData.append("chunkIndex", chunkIndex);
+        formData.append("totalChunks", totalChunks);
         formData.append("phase", selectedPhase);
         formData.append("service", selectedService);
         formData.append("serviceNumber", serviceNumber);
         formData.append("driverName", name);
         formData.append("driverEmail", email);
 
-        const res = await fetch(driveUploadUrl, {
-          method: "POST",
-          body: formData
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-          status.innerHTML = `✅ Upload completato!<br>
-            File salvato su Drive:<br>
-            <a href="${data.fileUrl}" target="_blank" class="text-blue-600 underline">${data.fileName}</a>`;
-        } else {
-          status.textContent = "❌ Errore durante l'upload: " + data.error;
+        try {
+          await fetch(webhookUrl, { method: "POST", body: formData });
+        } catch (err) {
+          status.textContent = "❌ Errore di rete durante l'upload.";
+          console.error(err);
+          return;
         }
 
-      } catch (err) {
-        console.error(err);
-        status.textContent = "❌ Errore di connessione o upload fallito.";
+        chunkIndex++;
+        offset += chunkSize;
+        const percent = Math.round((offset / file.size) * 100);
+        progressBar.style.width = percent + "%";
       }
+
+      status.textContent = "✅ Upload completato! I dati sono stati inviati al server.";
     });
   </script>
 </body>
